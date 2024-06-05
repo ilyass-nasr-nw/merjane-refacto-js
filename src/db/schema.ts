@@ -13,6 +13,9 @@ export const products = pgTable('products', {
 	expiryDate: date('expiry_date', {mode: 'date'}),
 	seasonStartDate: date('season_start_date', {mode: 'date'}),
 	seasonEndDate: date('season_end_date', {mode: 'date'}),
+	flashSaleStartDate: date('flash_sale_start_date', {mode: 'date'}),
+	flashSaleEndDate: date('flash_sale_end_date', {mode: 'date'}),
+
 });
 
 export type Product = typeof products.$inferSelect;

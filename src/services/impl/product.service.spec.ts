@@ -40,6 +40,8 @@ describe('ProductService Tests', () => {
 			expiryDate: null,
 			seasonStartDate: null,
 			seasonEndDate: null,
+			flashSaleStartDate: null,
+			flashSaleEndDate: null,
 		};
 		await databaseMock.insert(products).values(product);
 
