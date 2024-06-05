@@ -45,4 +45,13 @@ export class ProductService {
 			await this.db.update(products).set(p).where(eq(products.id, p.id));
 		}
 	}
+
+	public async handleFlashSaleProduct(p: Product): Promise<void> {
+		const currentDate = new Date();
+		if (currentDate > p.flashSaleEndDate!) {
+			p.available = 0;
+			this.ns.sendOutOfStockNotification(p.name);
+			await this.db.update(products).set(p).where(eq(products.id, p.id));
+		}
+	}
 }
