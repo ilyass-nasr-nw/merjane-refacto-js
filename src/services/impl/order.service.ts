@@ -1,6 +1,7 @@
 import { orders } from "@/db/schema";
 import { Database } from "@/db/type";
 import { eq } from "lodash";
+import {type Cradle} from '@fastify/awilix';
 
 export class OrderService {
     private readonly db: Database;
