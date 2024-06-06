@@ -1,6 +1,6 @@
 {
-  "id": "4a4c80a0-a8db-44c8-a94d-db7b805cfc6f",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "9d3d34b9-98a2-406b-bd7b-b1cb5b5742ce",
+  "prevId": "4a4c80a0-a8db-44c8-a94d-db7b805cfc6f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -125,6 +125,18 @@
         },
         "season_end_date": {
           "name": "season_end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flash_sale_start_date": {
+          "name": "flash_sale_start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flash_sale_end_date": {
+          "name": "flash_sale_end_date",
           "type": "date",
           "primaryKey": false,
           "notNull": false
