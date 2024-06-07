@@ -7,6 +7,7 @@ import {serializerCompiler, validatorCompiler, type ZodTypeProvider} from 'fasti
 import {z} from 'zod';
 import {orders, products} from '@/db/schema.js';
 
+// TODO: refactor this controller so the statements should abstracted in orders service
 export const myController = fastifyPlugin(async server => {
 	// Add schema validator and serializer
 	server.setValidatorCompiler(validatorCompiler);
@@ -33,8 +34,6 @@ export const myController = fastifyPlugin(async server => {
 					},
 				},
 			}))!;
-		console.log(order);
-		const ids: number[] = [request.params.orderId];
 		const {products: productList} = order;
 
 		if (productList) {
@@ -77,6 +76,18 @@ export const myController = fastifyPlugin(async server => {
 
 						break;
 					}
+
+					case 'FLASHSALE': {
+						const currentDate = new Date();
+						if (p.available > 0 && p.expiryFlashDate! > currentDate) {
+							p.available -= 1;
+							await dbse.update(products).set(p).where(eq(products.id, p.id));
+						} else {
+							await ps.handleExpiredFlashProduct(p);
+						}
+
+						break;
+					  }
 				}
 			}
 		}

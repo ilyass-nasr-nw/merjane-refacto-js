@@ -11,6 +11,7 @@ export const products = pgTable('products', {
 	type: varchar('type', {length: 256}).notNull(),
 	name: varchar('name', {length: 256}).notNull(),
 	expiryDate: date('expiry_date', {mode: 'date'}),
+	expiryFlashDate: date('expiry_flash_date', {mode: 'date'}),
 	seasonStartDate: date('season_start_date', {mode: 'date'}),
 	seasonEndDate: date('season_end_date', {mode: 'date'}),
 });
