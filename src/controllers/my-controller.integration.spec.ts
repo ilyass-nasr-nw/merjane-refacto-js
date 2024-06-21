@@ -73,6 +73,9 @@ describe('MyController Integration Tests', () => {
 			{
 				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Grapes', seasonStartDate: new Date(Date.now() + (180 * d)), seasonEndDate: new Date(Date.now() + (240 * d)),
 			},
+			{
+				leadTime: 15, available: 10, type: 'FLASHSALE', name: 'Test', expiryFlashDate: new Date(Date.now() + (2 * d))),
+			}
 		];
 	}
 });
