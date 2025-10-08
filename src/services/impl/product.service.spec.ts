@@ -14,6 +14,8 @@ describe('ProductService Tests', () => {
 	let productService: ProductService;
 	let databaseMock: Database;
 	let databaseName: string;
+	const msInDay = 24 * 60 * 60 * 1000;
+
 
 	beforeEach(async () => {
 		({databaseMock, databaseName} = await createDatabaseMock());
@@ -26,31 +28,58 @@ describe('ProductService Tests', () => {
 
 	afterEach(async () => cleanUp(databaseName));
 
-	it('should handle delay notification correctly', async () => {
-		// GIVEN
-		const product: Product = {
+
+	//TO DO: needs more coverage
+
+	
+	describe('Multiple Products Processing', () => {
+		it('should process multiple products correctly', async () => {
+		const currentDate = new Date();
+		const products: Product[] = [
+			{
 			id: 1,
-			leadTime: 15,
-			available: 0,
+			name: 'USB Cable',
 			type: 'NORMAL',
-			name: 'RJ45 Cable',
+			available: 10,
+			leadTime: 15,
 			expiryDate: null,
 			seasonStartDate: null,
 			seasonEndDate: null,
-		};
-		await databaseMock.insert(products).values(product);
+			},
+			{
+			id: 2,
+			name: 'USB Dongle',
+			type: 'NORMAL',
+			available: 0,
+			leadTime: 10,
+			expiryDate: null,
+			seasonStartDate: null,
+			seasonEndDate: null,
+			},
+			{
+			id: 3,
+			name: 'Milk',
+			type: 'EXPIRABLE',
+			available: 30,
+			leadTime: 15,
+			expiryDate: new Date(currentDate.getTime() + 26 * msInDay),
+			seasonStartDate: null,
+			seasonEndDate: null,
+			},
+		];
 
-		// WHEN
-		await productService.notifyDelay(product.leadTime, product);
+		await productService.processProducts(products, currentDate);
 
-		// THEN
-		expect(product.available).toBe(0);
-		expect(product.leadTime).toBe(15);
-		expect(notificationServiceMock.sendDelayNotification).toHaveBeenCalledWith(product.leadTime, product.name);
-		const result = await databaseMock.query.products.findFirst({
-			where: (product, {eq}) => eq(product.id, product.id),
+		// USB Cable - success
+		expect(products[0]!.available).toBe(9);
+		
+		// USB Dongle - delay notification
+		expect(notificationServiceMock.sendDelayNotification).toHaveBeenCalledWith(10, 'USB Dongle');
+		
+		// Milk - success
+		expect(products[2]!.available).toBe(29);
+		
 		});
-		expect(result).toEqual(product);
 	});
 });
 
