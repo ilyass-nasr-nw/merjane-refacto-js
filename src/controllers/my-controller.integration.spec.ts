@@ -39,6 +39,8 @@ describe('MyController Integration Tests', () => {
 	it('ProcessOrderShouldReturn', async () => {
 		const client = supertest(fastify.server);
 		const allProducts = createProducts();
+
+		//TO DO: FIX THIS: better sqlite3 is fully synchronous
 		const orderId = await database.transaction(async tx => {
 			const productList = await tx.insert(products).values(allProducts).returning({productId: products.id});
 			const [order] = await tx.insert(orders).values([{}]).returning({orderId: orders.id});
