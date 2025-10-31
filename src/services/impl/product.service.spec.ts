@@ -155,7 +155,6 @@ describe("ProductService Tests", () => {
         notificationServiceMock.sendOutOfStockNotification
       ).toHaveBeenCalledWith(product.name);
     });
-   
   });
 
   describe("handleExpiredProduct", () => {
@@ -176,4 +175,3 @@ describe("ProductService Tests", () => {
     });
   });
 });
-

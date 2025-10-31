@@ -13,13 +13,16 @@ export class ProductService {
     this.db = db;
   }
 
-  public async findById(id:number): Promise<Product> {
-	return await this.db.query.products.findFirst({
-		where: eq(products.id, id),
-	  });
+  public async findById(id: number): Promise<Product> {
+    return await this.db.query.products.findFirst({
+      where: eq(products.id, id),
+    });
   }
-  public async insertProducts(ps:Product[]): Promise<Number> {
-	return await this.db.insert(products).values(ps).returning({ productId: products.id });
+  public async insertProducts(ps: Product[]): Promise<Number> {
+    return await this.db
+      .insert(products)
+      .values(ps)
+      .returning({ productId: products.id });
   }
   public async updateProducts(p: Product): Promise<void> {
     await this.db.update(products).set(p).where(eq(products.id, p.id));

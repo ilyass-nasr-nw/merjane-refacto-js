@@ -26,21 +26,19 @@ export const myController = fastifyPlugin(async (server) => {
       },
     },
     async (request, reply) => {
-		
       const dbse = server.diContainer.resolve("db");
       const ps = server.diContainer.resolve("ps");
-      const order = (await dbse.query.orders
-		.findFirst({
-			where: eq(orders.id, request.params.orderId),
-			with: {
-				products: {
-					columns: {},
-					with: {
-						product: true,
-					},
-				},
-			},
-		}));
+      const order = await dbse.query.orders.findFirst({
+        where: eq(orders.id, request.params.orderId),
+        with: {
+          products: {
+            columns: {},
+            with: {
+              product: true,
+            },
+          },
+        },
+      });
       if (!order) {
         await reply.status(404).send({ message: "Order not found" });
       }
@@ -52,7 +50,6 @@ export const myController = fastifyPlugin(async (server) => {
       await ps.productProcessingService(productList);
 
       await reply.send({ orderId: order.id });
-	
     }
   );
 });
