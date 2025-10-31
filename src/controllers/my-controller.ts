@@ -26,19 +26,9 @@ export const myController = fastifyPlugin(async (server) => {
       },
     },
     async (request, reply) => {
-      const dbse = server.diContainer.resolve("db");
       const ps = server.diContainer.resolve("ps");
-      const order = await dbse.query.orders.findFirst({
-        where: eq(orders.id, request.params.orderId),
-        with: {
-          products: {
-            columns: {},
-            with: {
-              product: true,
-            },
-          },
-        },
-      });
+      const os = server.diContainer.resolve("os");
+      const order = await os.findOrderWithProducts(request.params.orderId);
       if (!order) {
         await reply.status(404).send({ message: "Order not found" });
       }
