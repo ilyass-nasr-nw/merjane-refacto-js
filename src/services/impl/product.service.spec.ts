@@ -135,6 +135,12 @@ describe("ProductService Tests", () => {
         notificationServiceMock.sendOutOfStockNotification
       ).toHaveBeenCalledWith(product.name);
       expect(product.available).toBe(0);
+      const result = await productService.findById(product.id);
+      expect(result).toEqual({
+        ...product,
+        expiryDate: null,
+        available: 0,
+      });
     });
     it("should send out of stock", async () => {
       const futureDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
@@ -154,24 +160,156 @@ describe("ProductService Tests", () => {
       expect(
         notificationServiceMock.sendOutOfStockNotification
       ).toHaveBeenCalledWith(product.name);
+      const result = await productService.findById(product.id);
+      expect(result).toEqual({
+        ...product,
+        expiryDate: null,
+        available: 3,
+      });
+    });
+
+    it("should call sendDelayNotification", async () => {
+      vi.spyOn(productService, "notifyDelay").mockResolvedValue();
+
+      const now = new Date();
+      const product: Product = {
+        id: 1,
+        name: "In-Season Product",
+        type: "SEASONAL",
+        available: 5,
+        leadTime: 2,
+        seasonStartDate: new Date(now.getTime() - 1000),
+        seasonEndDate: new Date(now.getTime() * 10000),
+      };
+      await productService.insertProducts([product]);
+      await productService.handleSeasonalProduct(product);
+      expect(productService.notifyDelay).toHaveBeenCalledWith(2, product);
     });
   });
 
   describe("handleExpiredProduct", () => {
-    it("should decrease available if product is not expired and available", async () => {
+    it("should decrease available", async () => {
       const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
       const product: Product = {
         id: 1,
         name: "Valid Product",
         type: "EXPIRABLE",
         available: 3,
         expiryDate: futureDate,
+        leadTime: 2,
+        seasonEndDate: null,
+        seasonStartDate: null,
       };
-
+      await productService.insertProducts([product]);
       await productService.handleExpiredProduct(product);
 
       expect(product.available).toBe(2);
+      const result = await productService.findById(product.id);
+      expect(result).toEqual({ ...product, available: 2 });
+    });
+    it("should send expiration notification", async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const product: Product = {
+        id: 1,
+        name: "Unavailable Product",
+        type: "EXPIRABLE",
+        available: 0,
+        expiryDate: futureDate,
+        leadTime: 2,
+        seasonEndDate: null,
+        seasonStartDate: null,
+      };
+      await productService.insertProducts([product]);
+      await productService.handleExpiredProduct(product);
+
+      expect(product.available).toBe(0);
+      const result = await productService.findById(product.id);
+      expect(result).toEqual({ ...product, available: 0 });
+    });
+  });
+
+  describe("productProcessingService", () => {
+    it("should process EXPIRABLE product and call handleExpiredProduct", async () => {
+      vi.spyOn(productService, "handleExpiredProduct").mockResolvedValue();
+      const product: Product = {
+        id: 3,
+        type: "EXPIRABLE",
+        available: 0,
+        leadTime: 2,
+        expiryDate: new Date(Date.now() - 1000), // expired
+        name: "Expirable",
+      };
+      await productService.insertProducts([product]);
+      await productService.productProcessingService([{ product }]);
+      expect(productService.handleExpiredProduct).toHaveBeenCalledWith(product);
+    });
+    it("should process NORMAL product if available > 0 and call updateProducts", async () => {
+      vi.spyOn(productService, "updateProducts").mockResolvedValue();
+      const product: Product = {
+        id: 3,
+        type: "NORMAL",
+        available: 1,
+        leadTime: 2,
+        expiryDate: new Date(Date.now() - 1000), // expired
+        name: "normale",
+      };
+      await productService.insertProducts([product]);
+      await productService.productProcessingService([{ product }]);
+      expect(productService.updateProducts).toHaveBeenCalledWith(product);
+    });
+    it("should process NORMAL product if available = 0 and send notification", async () => {
+      vi.spyOn(productService, "notifyDelay").mockResolvedValue();
+      const fixedDate = new Date("2025-01-01T12:00:00Z");
+
+      const product: Product = {
+        id: 3,
+        type: "NORMAL",
+        available: 0,
+        leadTime: 2,
+        expiryDate: fixedDate, // expired
+        name: "normale",
+      };
+      await productService.insertProducts([product]);
+      await productService.productProcessingService([{ product }]);
+      expect(productService.notifyDelay).toHaveBeenCalledWith(2, {
+        available: 0,
+        expiryDate: fixedDate,
+        id: 3,
+        leadTime: 2,
+        name: "normale",
+        type: "NORMAL",
+      });
+    });
+    it("should process SEASONAL product if available > 0 and call updateProducts", async () => {
+      vi.spyOn(productService, "updateProducts").mockResolvedValue();
+      const product: Product = {
+        id: 3,
+        type: "SEASONAL",
+        available: 1,
+        leadTime: 2,
+        expiryDate: new Date(Date.now() - 1000), // expired
+        name: "seasonal",
+      };
+      await productService.insertProducts([product]);
+      await productService.productProcessingService([{ product }]);
+      expect(productService.updateProducts).toHaveBeenCalledWith(product);
+    });
+
+    it("should process SEASONAL product if available = 0 and call handleSeasonalProduct", async () => {
+      vi.spyOn(productService, "handleSeasonalProduct").mockResolvedValue();
+      const product: Product = {
+        id: 3,
+        type: "SEASONAL",
+        available: 0,
+        leadTime: 2,
+        expiryDate: new Date(Date.now() - 1000), // expired
+        name: "seasonal",
+      };
+      await productService.insertProducts([product]);
+      await productService.productProcessingService([{ product }]);
+      expect(productService.handleSeasonalProduct).toHaveBeenCalledWith(
+        product
+      );
     });
   });
 });
