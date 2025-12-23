@@ -13,36 +13,48 @@ export class ProductService {
 		this.db = db;
 	}
 
-	public async notifyDelay(leadTime: number, p: Product): Promise<void> {
-		p.leadTime = leadTime;
-		await this.db.update(products).set(p).where(eq(products.id, p.id));
-		this.ns.sendDelayNotification(leadTime, p.name);
+	public async notifyDelay(leadTime: number, product: Product): Promise<void> {
+		product.leadTime = leadTime;
+		await this.updateProduct(product);
+		this.ns.sendDelayNotification(leadTime, product.name);
 	}
 
-	public async handleSeasonalProduct(p: Product): Promise<void> {
-		const currentDate = new Date();
-		const d = 1000 * 60 * 60 * 24;
-		if (new Date(currentDate.getTime() + (p.leadTime * d)) > p.seasonEndDate!) {
-			this.ns.sendOutOfStockNotification(p.name);
-			p.available = 0;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
-		} else if (p.seasonStartDate! > currentDate) {
-			this.ns.sendOutOfStockNotification(p.name);
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
-		} else {
-			await this.notifyDelay(p.leadTime, p);
+	public async handleNormalProduct(product: Product): Promise<void> {
+		if (product.available > 0) {
+			product.available -= 1;
+			await this.updateProduct(product);
+		} else if (product.leadTime > 0) {
+			await this.notifyDelay(product.leadTime, product);
 		}
 	}
 
-	public async handleExpiredProduct(p: Product): Promise<void> {
-		const currentDate = new Date();
-		if (p.available > 0 && p.expiryDate! > currentDate) {
-			p.available -= 1;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
+	public async handleSeasonalProduct(product: Product): Promise<void> {
+		const now = new Date();
+		const restockDate = new Date(now.getTime() + (product.leadTime * 24 * 60 * 60 * 1000));
+
+		if (restockDate > product.seasonEndDate! || now < product.seasonStartDate!) {
+			product.available = 0;
+			await this.updateProduct(product);
+			this.ns.sendOutOfStockNotification(product.name);
 		} else {
-			this.ns.sendExpirationNotification(p.name, p.expiryDate!);
-			p.available = 0;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
+			await this.notifyDelay(product.leadTime, product);
 		}
+	}
+
+	public async handleExpiredProduct(product: Product): Promise<void> {
+		const now = new Date();
+
+		if (product.available > 0 && product.expiryDate! > now) {
+			product.available -= 1;
+			await this.updateProduct(product);
+		} else {
+			product.available = 0;
+			await this.updateProduct(product);
+			this.ns.sendExpirationNotification(product.name, product.expiryDate!);
+		}
+	}
+
+	private async updateProduct(product: Product): Promise<void> {
+		await this.db.update(products).set(product).where(eq(products.id, product.id));
 	}
 }
