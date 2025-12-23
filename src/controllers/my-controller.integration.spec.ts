@@ -1,5 +1,8 @@
 import {
-	describe, it, expect, beforeEach,
+	describe,
+	it,
+	expect,
+	beforeEach,
 	afterEach,
 } from 'vitest';
 import {type FastifyInstance} from 'fastify';
@@ -32,6 +35,7 @@ describe('MyController Integration Tests', () => {
 		await fastify.ready();
 		database = fastify.database;
 	});
+
 	afterEach(async () => {
 		await fastify.close();
 	});
@@ -39,14 +43,33 @@ describe('MyController Integration Tests', () => {
 	it('ProcessOrderShouldReturn', async () => {
 		const client = supertest(fastify.server);
 		const allProducts = createProducts();
-		const orderId = await database.transaction(async tx => {
-			const productList = await tx.insert(products).values(allProducts).returning({productId: products.id});
-			const [order] = await tx.insert(orders).values([{}]).returning({orderId: orders.id});
-			await tx.insert(ordersToProducts).values(productList.map(p => ({orderId: order!.orderId, productId: p.productId})));
-			return order!.orderId;
+		const orderId = database.transaction(tx => {
+			const productList = tx.insert(products)
+				.values(allProducts)
+				.returning({productId: products.id})
+				.all();
+
+			const order = tx.insert(orders)
+				.values([{}])
+				.returning({orderId: orders.id})
+				.get();
+
+			tx.insert(ordersToProducts)
+				.values(
+					productList.map(p => ({
+						orderId: order.orderId,
+						productId: p.productId,
+					})),
+				)
+				.run();
+
+			return order.orderId;
 		});
 
-		await client.post(`/orders/${orderId}/processOrder`).expect(200).expect('Content-Type', /application\/json/);
+		await client
+			.post(`/orders/${orderId}/processOrder`)
+			.expect(200)
+			.expect('Content-Type', /application\/json/);
 
 		const resultOrder = await database.query.orders.findFirst({where: eq(orders.id, orderId)});
 		expect(resultOrder!.id).toBe(orderId);
@@ -54,25 +77,52 @@ describe('MyController Integration Tests', () => {
 
 	function createProducts(): ProductInsert[] {
 		const d = 24 * 60 * 60 * 1000;
+		const now = Date.now();
+
 		return [
 			{
-				leadTime: 15, available: 30, type: 'NORMAL', name: 'USB Cable',
+				leadTime: 15,
+				available: 30,
+				type: 'NORMAL',
+				name: 'USB Cable',
 			},
 			{
-				leadTime: 10, available: 0, type: 'NORMAL', name: 'USB Dongle',
+				leadTime: 10,
+				available: 0,
+				type: 'NORMAL',
+				name: 'USB Dongle',
 			},
 			{
-				leadTime: 15, available: 30, type: 'EXPIRABLE', name: 'Butter', expiryDate: new Date(Date.now() + (26 * d)),
+				leadTime: 15,
+				available: 30,
+				type: 'EXPIRABLE',
+				name: 'Butter',
+				expiryDate: new Date(now + (26 * d)),
 			},
 			{
-				leadTime: 90, available: 6, type: 'EXPIRABLE', name: 'Milk', expiryDate: new Date(Date.now() - (2 * d)),
+				leadTime: 90,
+				available: 6,
+				type: 'EXPIRABLE',
+				name: 'Milk',
+				expiryDate: new Date(now - (2 * d)),
 			},
 			{
-				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Watermelon', seasonStartDate: new Date(Date.now() - (2 * d)), seasonEndDate: new Date(Date.now() + (58 * d)),
+				leadTime: 15,
+				available: 30,
+				type: 'SEASONAL',
+				name: 'Watermelon',
+				seasonStartDate: new Date(now - (2 * d)),
+				seasonEndDate: new Date(now + (58 * d)),
 			},
 			{
-				leadTime: 15, available: 30, type: 'SEASONAL', name: 'Grapes', seasonStartDate: new Date(Date.now() + (180 * d)), seasonEndDate: new Date(Date.now() + (240 * d)),
+				leadTime: 15,
+				available: 30,
+				type: 'SEASONAL',
+				name: 'Grapes',
+				seasonStartDate: new Date(now + (180 * d)),
+				seasonEndDate: new Date(now + (240 * d)),
 			},
 		];
 	}
-});
+},
+);
