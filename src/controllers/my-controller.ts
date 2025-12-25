@@ -1,11 +1,9 @@
 
 import fastifyPlugin from 'fastify-plugin';
-import {type Cradle} from '@fastify/awilix';
 import {z} from 'zod';
 import {serializerCompiler, validatorCompiler, type ZodTypeProvider} from 'fastify-type-provider-zod';
-import {eq} from 'drizzle-orm';
-import {orders} from '@/db/schema.js';
 import {type ProductService} from '@/services/impl/product.service.js';
+import {type OrderService} from '@/services/impl/order.service.js';
 
 export const myController = fastifyPlugin(async server => {
 	server.setValidatorCompiler(validatorCompiler);
@@ -21,16 +19,10 @@ export const myController = fastifyPlugin(async server => {
 			},
 		},
 		async (request, reply) => {
-			const database: Cradle['db'] = server.diContainer.resolve('db');
 			const ps: ProductService = server.diContainer.resolve('ps');
+			const or: OrderService = server.diContainer.resolve('or');
 
-			const order = await database.query.orders.findFirst({
-				where: eq(orders.id, request.params.orderId),
-				with: {
-					products: {columns: {}, with: {product: true}},
-				},
-			});
-
+			const order = await or.getOrderWithProducts(request.params.orderId);
 			if (!order) {
 				return reply.status(404).send({error: 'Order not found'});
 			}
@@ -51,7 +43,8 @@ export const myController = fastifyPlugin(async server => {
 						case 'EXPIRABLE': {
 							await ps.handleExpiredProduct(product);
 							break;
-						}								
+						}
+
 						default: {
 							throw new Error(`Unhandled product type: ${product.type}`);
 						}
