@@ -54,6 +54,33 @@ export class ProductService {
 		}
 	}
 
+	public async processOrderProducts(orderProducts: Array<{product: Product}>): Promise<void> {
+		await Promise.all(
+			orderProducts.map(async ({product}) => {
+				switch (product.type) {
+					case 'NORMAL': {
+						await this.handleNormalProduct(product);
+						break;
+					}
+
+					case 'SEASONAL': {
+						await this.handleSeasonalProduct(product);
+						break;
+					}
+
+					case 'EXPIRABLE': {
+						await this.handleExpiredProduct(product);
+						break;
+					}
+
+					default: {
+						throw new Error(`Unhandled product type: ${product.type}`);
+					}
+				}
+			}),
+		);
+	}
+
 	private async updateProduct(product: Product): Promise<void> {
 		await this.db.update(products).set(product).where(eq(products.id, product.id));
 	}
