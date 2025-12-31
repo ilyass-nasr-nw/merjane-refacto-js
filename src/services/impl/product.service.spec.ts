@@ -73,6 +73,28 @@ describe('ProductService Tests', () => {
 		expect(notificationServiceMock.sendDelayNotification).toHaveBeenCalledWith(15, product.name);
 	});
 
+	it('should handle stockout when delivery arrives after season ends', async () => {
+		const today = new Date('2025-12-31');
+		vi.setSystemTime(today);
+
+		const product = createProduct({
+			type: 'SEASONAL',
+			available: 0,
+			leadTime: 30, // Expected delivery: Jan 29, 2026
+			seasonEndDate: new Date('2026-01-15'), // Season ends earlier
+		});
+		await databaseMock.insert(products).values(product);
+
+		await productService.processProduct(product);
+
+		expect(notificationServiceMock.sendOutOfStockNotification).toHaveBeenCalledWith(product.name);
+		const updatedProduct = await databaseMock.query.products.findFirst();
+		expect(updatedProduct!.available).toBe(0);
+	});
+
+
+
+
 	/* --- Test Helper --- */
 	function createProduct(overrides: Partial<Product>): Product {
 		return {
