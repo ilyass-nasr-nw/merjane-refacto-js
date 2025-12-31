@@ -1,8 +1,8 @@
-import {rm} from 'node:fs/promises';
-import {exec as execCallback} from 'node:child_process';
-import {promisify} from 'node:util';
+import { rm } from 'node:fs/promises';
+import { exec as execCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 import SqliteDatabase from 'better-sqlite3';
-import {drizzle} from 'drizzle-orm/better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import {
 	uniqueNamesGenerator, adjectives, colors, animals,
 } from 'unique-names-generator';
@@ -18,12 +18,18 @@ export async function cleanAllLooseDatabases(prefix: string) {
 	await Promise.all(entries.map(async entry => cleanUp(entry)));
 }
 
-export async function cleanUp(databaseName: string) {
-	await rm(databaseName, {force: true});
+export async function cleanUp(databaseName: string, sqlite: any = null) {
+	if (sqlite) {
+		sqlite.close(); // closes connection safely
+		sqlite = null;
+	}
+	await rm(databaseName, { force: true }); // then delete
 }
 
+
+
 export async function createDatabaseMock() {
-	const randomName = uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}); // Big_red_donkey
+	const randomName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] }); // Big_red_donkey
 	const databaseName = `${UNIT_TEST_DB_PREFIX}${randomName}.db`;
 	const sqlite = new SqliteDatabase(databaseName);
 	await exec(`pnpm drizzle-kit push --schema=src/db/schema.ts --dialect=sqlite --url=${databaseName}`);
@@ -31,5 +37,5 @@ export async function createDatabaseMock() {
 	const databaseMock = drizzle(sqlite, {
 		schema,
 	});
-	return {databaseMock, databaseName};
+	return { databaseMock, databaseName, sqlite };
 }

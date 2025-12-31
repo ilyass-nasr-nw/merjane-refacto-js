@@ -1,5 +1,5 @@
-import {resolve} from 'node:path';
-import {type UserConfig} from 'vitest/config';
+import { resolve } from 'node:path';
+import { type UserConfig } from 'vitest/config';
 
 export const baseConfig: UserConfig = {
 	test: {
@@ -11,6 +11,11 @@ export const baseConfig: UserConfig = {
 		root: resolve(import.meta.dirname),
 		globals: true,
 		watchExclude: ['coverage', 'html/**', '**/*.db'],
+		exclude: [
+			'**/node_modules/**',
+			'**/*.db',
+			'**/*.db-journal',
+		],
 	},
 	resolve: {
 		alias: {
