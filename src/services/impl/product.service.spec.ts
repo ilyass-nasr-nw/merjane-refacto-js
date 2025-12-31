@@ -74,9 +74,6 @@ describe('ProductService Tests', () => {
 	});
 
 	it('should handle stockout when delivery arrives after season ends', async () => {
-		const today = new Date('2025-12-31');
-		vi.setSystemTime(today);
-
 		const product = createProduct({
 			type: 'SEASONAL',
 			available: 0,
@@ -94,9 +91,6 @@ describe('ProductService Tests', () => {
 
 
 	it('should set stock to 0 and notify when expirable product is expired', async () => {
-		const today = new Date('2025-12-30');
-		vi.setSystemTime(today);
-
 		const expiredProduct = createProduct({
 			type: 'EXPIRABLE',
 			available: 5,
