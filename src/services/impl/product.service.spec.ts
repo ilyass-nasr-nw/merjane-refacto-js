@@ -14,7 +14,7 @@ describe('ProductService Tests', () => {
 	let productService: ProductService;
 	let databaseMock: Database;
 	let databaseName: string;
-	let sqlite: SqliteDatabase;
+	let sqlite: any;
 
 	beforeEach(async () => {
 		({ databaseMock, databaseName, sqlite } = await createDatabaseMock());
@@ -93,7 +93,23 @@ describe('ProductService Tests', () => {
 	});
 
 
+	it('should set stock to 0 and notify when expirable product is expired', async () => {
+		const today = new Date('2025-12-30');
+		vi.setSystemTime(today);
 
+		const expiredProduct = createProduct({
+			type: 'EXPIRABLE',
+			available: 5,
+			expiryDate: new Date('2025-12-01'), // Already expired
+		});
+		await databaseMock.insert(products).values(expiredProduct);
+
+		await productService.processProduct(expiredProduct);
+
+		const updatedProduct = await databaseMock.query.products.findFirst();
+		expect(updatedProduct!.available).toBe(0);
+		expect(notificationServiceMock.sendExpirationNotification).toHaveBeenCalled();
+	});
 
 	/* --- Test Helper --- */
 	function createProduct(overrides: Partial<Product>): Product {

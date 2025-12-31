@@ -111,17 +111,24 @@ export class ProductService {
 	}
 
 
-	public async handleExpiredProduct(product: Product): Promise<void> {
-		const currentDate = new Date();
-		if (product.available > 0 && product.expiryDate! > currentDate) {
+	/* --- Expirable Product Logic --- */
+
+	private async handleExpiredProduct(product: Product): Promise<void> {
+		const today = new Date();
+
+		if (product.available > 0 && !this.isExpired(product, today)) {
 			product.available -= 1;
-			await this.db.update(products).set(product).where(eq(products.id, product.id));
-		} else {
-			this.notificationService.sendExpirationNotification(p.name, p.expiryDate!);
-			p.available = 0;
-			await this.db.update(products).set(p).where(eq(products.id, p.id));
+			await this.persistUpdate(product);
+			return;
 		}
+
+		this.notificationService.sendExpirationNotification(product.name, product.expiryDate!);
+		product.available = 0;
+		await this.persistUpdate(product);
 	}
 
+	private isExpired(product: Product, today: Date): boolean {
+		return product.expiryDate ? product.expiryDate <= today : false;
+	}
 
 }
