@@ -42,7 +42,15 @@ export class ProductService {
 	/* --- Normal Product Logic --- */
 
 	private async handleNormalProduct(product: Product): Promise<void> {
+		if (product.available > 0) {
+			product.available -= 1;
+			await this.persistUpdate(product);
+			return;
+		}
 
+		if (product.leadTime > 0) {
+			await this.notifyDelay(product.leadTime, product);
+		}
 	}
 
 	public async notifyDelay(leadTime: number, p: Product): Promise<void> {
