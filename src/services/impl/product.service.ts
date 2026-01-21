@@ -30,15 +30,24 @@ export class ProductService {
 
 	public async handleSeasonalProduct(product: Product): Promise<void> {
 		const now = new Date();
+		const inSeason = now >= product.seasonStartDate! && now <= product.seasonEndDate!;
+
+		if (inSeason && product.available > 0) {
+			product.available -= 1;
+			await this.updateProduct(product);
+			return;
+		}
+
 		const restockDate = new Date(now.getTime() + (product.leadTime * 24 * 60 * 60 * 1000));
 
 		if (restockDate > product.seasonEndDate! || now < product.seasonStartDate!) {
 			product.available = 0;
 			await this.updateProduct(product);
 			this.ns.sendOutOfStockNotification(product.name);
-		} else {
-			await this.notifyDelay(product.leadTime, product);
+			return;
 		}
+
+		await this.notifyDelay(product.leadTime, product);
 	}
 
 	public async handleExpiredProduct(product: Product): Promise<void> {
