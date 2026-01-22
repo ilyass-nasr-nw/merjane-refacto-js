@@ -19,6 +19,10 @@ export async function cleanAllLooseDatabases(prefix: string) {
 }
 
 export async function cleanUp(databaseName: string) {
+	if (!databaseName) {
+		return;
+	}
+
 	await rm(databaseName, {force: true});
 }
 
