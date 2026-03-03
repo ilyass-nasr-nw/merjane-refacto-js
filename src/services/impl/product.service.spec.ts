@@ -14,9 +14,10 @@ describe('ProductService Tests', () => {
 	let productService: ProductService;
 	let databaseMock: Database;
 	let databaseName: string;
+	let closeDatabase: () => void;
 
 	beforeEach(async () => {
-		({databaseMock, databaseName} = await createDatabaseMock());
+		({databaseMock, databaseName, close: closeDatabase} = await createDatabaseMock());
 		notificationServiceMock = mockDeep<INotificationService>();
 		productService = new ProductService({
 			ns: notificationServiceMock,
@@ -24,7 +25,10 @@ describe('ProductService Tests', () => {
 		});
 	});
 
-	afterEach(async () => cleanUp(databaseName));
+	afterEach(async () => {
+		closeDatabase();
+		await cleanUp(databaseName);
+	});
 
 	it('should handle delay notification correctly', async () => {
 		// GIVEN

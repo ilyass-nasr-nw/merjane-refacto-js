@@ -8,10 +8,17 @@ import {
 } from 'unique-names-generator';
 import fg from 'fast-glob';
 import * as schema from '@/db/schema.js';
+import {type Database} from '@/db/type.js';
 
 const exec = promisify(execCallback);
 
 export const UNIT_TEST_DB_PREFIX = './unit-test-';
+
+type DatabaseMockContext = {
+	databaseMock: Database;
+	databaseName: string;
+	close: () => void;
+};
 
 export async function cleanAllLooseDatabases(prefix: string) {
 	const entries = await fg([`${prefix}*.db`]);
@@ -22,7 +29,7 @@ export async function cleanUp(databaseName: string) {
 	await rm(databaseName, {force: true});
 }
 
-export async function createDatabaseMock() {
+export async function createDatabaseMock(): Promise<DatabaseMockContext> {
 	const randomName = uniqueNamesGenerator({dictionaries: [adjectives, colors, animals]}); // Big_red_donkey
 	const databaseName = `${UNIT_TEST_DB_PREFIX}${randomName}.db`;
 	const sqlite = new SqliteDatabase(databaseName);
@@ -31,5 +38,5 @@ export async function createDatabaseMock() {
 	const databaseMock = drizzle(sqlite, {
 		schema,
 	});
-	return {databaseMock, databaseName};
+	return {databaseMock, databaseName, close: () => sqlite.close()};
 }
