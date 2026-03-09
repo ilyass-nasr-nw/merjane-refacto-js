@@ -4,7 +4,8 @@ import {type FastifyBaseLogger, type FastifyInstance} from 'fastify';
 import {type INotificationService} from '@/services/notifications.port.js';
 import {NotificationService} from '@/services/impl/notification.service.js';
 import {type Database} from '@/db/type.js';
-import {ProductService} from '@/services/impl/product.service.js';
+import { ProductService } from '@/services/impl/productService/product.service.js';
+ 
 
 declare module '@fastify/awilix' {
 
