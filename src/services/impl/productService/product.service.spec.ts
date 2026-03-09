@@ -3,8 +3,8 @@ import {
 	afterEach,
 } from 'vitest';
 import {mockDeep, type DeepMockProxy} from 'vitest-mock-extended';
-import {type INotificationService} from '../notifications.port.js';
-import {createDatabaseMock, cleanUp} from '../../utils/test-utils/database-tools.ts.js';
+import {type INotificationService} from '../../notifications.port.js';
+import {createDatabaseMock, cleanUp} from '../../../utils/test-utils/database-tools.ts.js';
 import {ProductService} from './product.service.js';
 import {products, type Product} from '@/db/schema.js';
 import {type Database} from '@/db/type.js';

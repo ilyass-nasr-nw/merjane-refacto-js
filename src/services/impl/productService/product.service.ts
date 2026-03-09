@@ -1,8 +1,8 @@
 import {type Cradle} from '@fastify/awilix';
 import {eq} from 'drizzle-orm';
-import {type INotificationService} from '../notifications.port.js';
 import {products, type Product} from '@/db/schema.js';
 import {type Database} from '@/db/type.js';
+import { INotificationService } from '@/services/notifications.port.js';
 
 export class ProductService {
 	private readonly ns: INotificationService;
