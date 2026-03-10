@@ -7,6 +7,9 @@
         "modifiers": ["const", "global", "exported"],
         "format": ["UPPER_CASE", "strictCamelCase"]
       }
-    ]
+    ],
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "@typescript-eslint/ban-types": "off",
+    "no-await-in-loop": "off"
   }
 }

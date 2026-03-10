@@ -7,7 +7,7 @@ import * as schema from './schema.js';
 import {type Database} from './type.js';
 
 declare module 'fastify' {
-	interface FastifyInstance { // eslint-disable-line @typescript-eslint/consistent-type-definitions
+	interface FastifyInstance {
 		database: Database;
 	}
 }
@@ -22,7 +22,6 @@ export const drizzlePlugin: FastifyPluginAsync = fastifyPlugin(
 			...(appConfig.env === 'PROD' ? {} : {logger: true}),
 		});
 
-		// Make Prisma Client available through the fastify server instance: server.prisma
 		server.decorate('database', database);
 
 		server.addHook('onClose', async () => {

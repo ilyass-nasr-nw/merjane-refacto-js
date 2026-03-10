@@ -2,13 +2,13 @@ import {relations} from 'drizzle-orm';
 import {
 	text, integer, sqliteTable, primaryKey,
 } from 'drizzle-orm/sqlite-core';
+import {type ProductType} from '@/types/product-type.js';
 
-// Declaring enum in database
 export const products = sqliteTable('products', {
 	id: integer('id').notNull().primaryKey(),
 	leadTime: integer('lead_time').notNull(),
 	available: integer('available').notNull(),
-	type: text('type').notNull(),
+	type: text('type').$type<ProductType>().notNull(),
 	name: text('name').notNull(),
 	expiryDate: integer('expiry_date', {mode: 'timestamp_ms'}),
 	seasonStartDate: integer('season_start_date', {mode: 'timestamp_ms'}),

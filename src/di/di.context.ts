@@ -5,14 +5,26 @@ import {type INotificationService} from '@/services/notifications.port.js';
 import {NotificationService} from '@/services/impl/notification.service.js';
 import {type Database} from '@/db/type.js';
 import {ProductService} from '@/services/impl/product.service.js';
+import {OrderService} from '@/services/impl/order.service.js';
+import {ProductRepository} from '@/repositories/product.repository.js';
+import {OrderRepository} from '@/repositories/order.repository.js';
+import {NormalProductHandler} from '@/services/product-handlers/normal-product.handler.js';
+import {SeasonalProductHandler} from '@/services/product-handlers/seasonal-product.handler.js';
+import {ExpirableProductHandler} from '@/services/product-handlers/expirable-product.handler.js';
 
 declare module '@fastify/awilix' {
 
-	interface Cradle { // eslint-disable-line @typescript-eslint/consistent-type-definitions
+	interface Cradle {
 		logger: FastifyBaseLogger;
 		db: Database;
-		ns: INotificationService;
-		ps: ProductService;
+		notificationService: INotificationService;
+		productRepository: ProductRepository;
+		orderRepository: OrderRepository;
+		normalProductHandler: NormalProductHandler;
+		seasonalProductHandler: SeasonalProductHandler;
+		expirableProductHandler: ExpirableProductHandler;
+		productService: ProductService;
+		orderService: OrderService;
 	}
 }
 
@@ -21,15 +33,15 @@ export async function configureDiContext(
 ): Promise<void> {
 	diContainer.register({
 		logger: asValue(server.log),
-	});
-	diContainer.register({
 		db: asValue(server.database),
-	});
-	diContainer.register({
-		ns: asClass(NotificationService),
-	});
-	diContainer.register({
-		ps: asClass(ProductService),
+		notificationService: asClass(NotificationService),
+		productRepository: asClass(ProductRepository),
+		orderRepository: asClass(OrderRepository),
+		normalProductHandler: asClass(NormalProductHandler),
+		seasonalProductHandler: asClass(SeasonalProductHandler),
+		expirableProductHandler: asClass(ExpirableProductHandler),
+		productService: asClass(ProductService),
+		orderService: asClass(OrderService),
 	});
 }
 
